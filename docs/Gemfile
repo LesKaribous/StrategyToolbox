@@ -7,4 +7,5 @@ group :jekyll_plugins do
     gem 'jekyll-seo-tag'
     gem 'jekyll-include-cache'
     gem 'rake'
+    gem 'jekyll-pdf-embed'
 end
