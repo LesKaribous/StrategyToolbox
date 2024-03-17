@@ -7,4 +7,4 @@ nav_order: 3
 
 # Memento Homologation - FR
 
-{% pdf ../../assets/pdf/E2024_Memento_Homologuation_FR.pdf %}
+<iframe src="../../assets/pdf/E2024_Memento_Homologuation_FR.pdf" width="100%" height="800px"></iframe>

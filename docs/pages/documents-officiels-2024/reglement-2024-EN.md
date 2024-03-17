@@ -7,4 +7,4 @@ nav_order: 2
 
 # Règlement 2024 - EN
 
-{% pdf ../../assets/pdf/Eurobot2024_Rules_CUP_EN_FINAL.pdf %}
+<iframe src="../../assets/pdf/Eurobot2024_Rules_CUP_EN_FINAL.pdf" width="100%" height="800px"></iframe>
