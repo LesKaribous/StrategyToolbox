@@ -1,5 +1,5 @@
 let terrainImage;
-let ajustementHauteur = 90; // Pourcentage de la taille originale.
+let ajustement = 90; // Pourcentage de la taille originale.
 
 
 function preload() {
@@ -9,7 +9,7 @@ function preload() {
 function setup() {
 
     const container = select('#p5-container');
-    let height = (windowHeight * ajustementHauteur) / 100;
+    let height = (windowHeight * ajustement) / 100;
     let width = (height * 2) / 3;
   
     if (width > container.width) {
@@ -17,8 +17,8 @@ function setup() {
       height = (width * 3) / 2;
     }
   
-    height  = (height * ajustementHauteur) / 100; 
-    width   = (width  * ajustementHauteur) / 100;
+    height  = (height * ajustement) / 100; 
+    width   = (width  * ajustement) / 100;
   
     let canvas = createCanvas(width, height);
     canvas.parent('p5-container');
