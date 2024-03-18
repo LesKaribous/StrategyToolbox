@@ -1,15 +1,21 @@
 let terrainImage;
 let ajustement = 90; // Pourcentage de la taille originale.
-let rawPOIs = [];
 
 // GUI
 let cb_POI;
 let afficherPOI = true;
+let cb_DeleteOption;
+let deleteOption = false;
 
 // Points
 let echelleX, echelleY; // Facteurs d'échelle pour les axes X et Y
-
+let rawPOIs = [];
 let pois = [];
+let pointsStrategie = [];
+let numeroPointStrategie = 1; // Commencez à numéroter à partir de 1
+let pointSelectionne = null;
+
+
 
 
 function calculerEchelle() {
@@ -48,12 +54,41 @@ function setup() {
 function draw() {
     drawTerrain();
     drawPOI();
+    drawPath(pointsStrategie);
+    drawList(pointsStrategie);
 }
 
 function setupUI() {
     cb_POI = createCheckbox("POIs", afficherPOI);
     cb_POI.parent('ui-container');
     cb_POI.changed(majPOI);
+
+    cb_DeleteOption = createCheckbox("Delete Option", deleteOption);
+    cb_DeleteOption.parent('ui-container');
+    cb_DeleteOption.changed(majDeleteOption);
+
+    let btnClear = createButton("Clear Stratégie");
+    btnClear.parent('ui-container');
+    btnClear.mousePressed(clearStrategie);
+
+    let btnSave = createButton("Sauvegarder Stratégie");
+    btnSave.parent('ui-container');
+    btnSave.mousePressed(saveStrategie);
+
+    let btnLoad = createButton("Charger Stratégie");
+    btnLoad.parent('ui-container');
+    btnLoad.mousePressed(loadStrategie);
+
+    let btnExport = createButton('Exporter Stratégie');
+    btnExport.parent('ui-container');
+    btnExport.mousePressed(exporterStrategie);
+
+    let inputImport = createFileInput(handleFile);
+    inputImport.parent('ui-container');
+}
+
+function majDeleteOption() {
+    deleteOption = cb_DeleteOption.checked();
 }
 
 function majPOI() {
@@ -62,7 +97,7 @@ function majPOI() {
 
 function drawPOI() {
     if (afficherPOI) {
-        drawList(pois); // Dessinez tous les points d'intérêt
+        drawList(pois);
     }
 }
 
@@ -84,8 +119,6 @@ function windowResized() {
     calculerEchelle();
 }
 
-
-// Dessiner le terrain
 function drawTerrain() {
     background(220);
     // Calculez le ratio d'aspect de l'image et du canvas
@@ -114,7 +147,7 @@ function drawTerrain() {
 function drawPoint(point) {
     let canvasX = point.y * echelleY;
     let canvasY = (3000 - point.x) * echelleX;
-    let taillePoint = 15;
+    let taillePoint = 20;
 
     // Vérifier si la souris est proche du point pour décider si on affiche un contour
     let estProche = dist(mouseX, mouseY, canvasX, canvasY) < taillePoint / 2;
@@ -163,13 +196,28 @@ function drawPoint(point) {
     }
 }
 
-
-
 function drawList(points) {
     points.forEach(point => {
         drawPoint(point);
     });
 }
+
+function drawPath(points) {
+    if (points.length < 2) return; // Besoin d'au moins deux points pour dessiner un chemin
+
+    stroke(255, 204, 0); // Couleur du chemin
+    strokeWeight(2); // Épaisseur de la ligne
+    noFill();
+
+    beginShape();
+    for (let i = 0; i < points.length; i++) {
+        let canvasX = points[i].y * echelleY;
+        let canvasY = (3000 - points[i].x) * echelleX;
+        vertex(canvasX, canvasY);
+    }
+    endShape();
+}
+
 
 function extractPOIs() {
     const regex = /const Vec2 (\w+) = Vec2\((\d+),(\d+)\);/; // Regex pour matcher les points
@@ -184,4 +232,161 @@ function extractPOIs() {
             pois.push({ nom: name, x: x, y: y, couleur: "red", numero: numero });
         }
     });
+}
+function mousePressed() {
+    if (deleteOption && mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height) {
+        // Logique de suppression des points
+        for (let i = pointsStrategie.length - 1; i >= 0; i--) {
+            let point = pointsStrategie[i];
+            let canvasX = point.y * echelleY;
+            let canvasY = (3000 - point.x) * echelleX;
+            if (dist(mouseX, mouseY, canvasX, canvasY) < 15) {
+                // Supprime le point et met à jour les numéros des points suivants
+                pointsStrategie.splice(i, 1);
+                renumeroterPoints();
+                return; // Arrêtez la recherche dès qu'un point est trouvé et supprimé
+            }
+        }
+    } else {
+        let pointTrouve = false;
+        // Tentez d'abord de sélectionner un point de stratégie existant pour le déplacer
+        for (let point of pointsStrategie) {
+            let canvasX = point.y * echelleY;
+            let canvasY = (3000 - point.x) * echelleX;
+            if (dist(mouseX, mouseY, canvasX, canvasY) < 15) {
+                pointSelectionne = point;
+                pointTrouve = true;
+                break; // Un point est trouvé pour déplacement, arrêter la recherche
+            }
+        }
+
+        if (!pointTrouve && mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height) {
+            // Si aucun point de stratégie n'est sélectionné, vérifiez l'aimantation ou créez un nouveau point
+            verifierAimantationEtCreerPoint(); // Une nouvelle fonction pour la logique d'aimantation et création de point
+        }
+    }
+}
+
+
+
+
+
+function renumeroterPoints() {
+    numeroPointStrategie = 1;
+    for (let point of pointsStrategie) {
+        point.numero = numeroPointStrategie++;
+    }
+}
+
+function mouseDragged() {
+    if (pointSelectionne) {
+        let aimante = false;
+        for (let poi of pois) {
+            let canvasX = poi.y * echelleY;
+            let canvasY = (3000 - poi.x) * echelleX;
+            if (dist(mouseX, mouseY, canvasX, canvasY) < 15) {
+                // Si proche d'un POI, aimantez le point
+                pointSelectionne.x = poi.x;
+                pointSelectionne.y = poi.y;
+                pointSelectionne.couleur = "green"; // Changez la couleur pour indiquer l'aimantation
+                aimante = true;
+                break;
+            }
+        }
+
+        if (!aimante) {
+            // Si le point n'est pas aimanté, mettez à jour selon la position de la souris et remettez en bleu
+            pointSelectionne.x = Math.round((3000 - (mouseY / echelleY)));
+            pointSelectionne.y = Math.round(mouseX / echelleX);
+            pointSelectionne.couleur = "blue"; // La couleur originale des points de stratégie
+        }
+    }
+}
+
+
+function verifierAimantationEtCreerPoint() {
+    let aimante = false;
+    for (let poi of pois) {
+        let canvasX = poi.y * echelleY;
+        let canvasY = (3000 - poi.x) * echelleX;
+        if (dist(mouseX, mouseY, canvasX, canvasY) < 15) {
+            pointsStrategie.push({
+                x: poi.x,
+                y: poi.y,
+                nom: `Stratégie ${numeroPointStrategie}`,
+                couleur: "green",
+                numero: numeroPointStrategie++
+            });
+            aimante = true;
+            break;
+        }
+    }
+
+    if (!aimante) {
+        // Crée un nouveau point à l'emplacement de la souris si non aimanté
+        let xTerrain = Math.round((3000 - (mouseY / echelleY)));
+        let yTerrain = Math.round(mouseX / echelleX);
+        pointsStrategie.push({
+            x: xTerrain,
+            y: yTerrain,
+            nom: `Stratégie ${numeroPointStrategie}`,
+            couleur: "blue",
+            numero: numeroPointStrategie++
+        });
+    }
+}
+
+
+function mouseReleased() {
+    pointSelectionne = null; // Réinitialiser le point sélectionné après le glissement
+}
+
+function clearStrategie() {
+    pointsStrategie = [];
+    numeroPointStrategie = 1;
+}
+
+function saveStrategie() {
+    localStorage.setItem('strategie', JSON.stringify(pointsStrategie));
+}
+
+function loadStrategie() {
+    let strategie = localStorage.getItem('strategie');
+    if (strategie) {
+        pointsStrategie = JSON.parse(strategie);
+        // Assurez-vous que le numéro suit correctement le dernier point ajouté
+        numeroPointStrategie = pointsStrategie.length ? pointsStrategie[pointsStrategie.length - 1].numero + 1 : 1;
+    }
+}
+
+function exporterStrategie() {
+    let dataStr = JSON.stringify(pointsStrategie, null, 2);
+    let dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+
+    let exportFileDefaultName = 'strategie.json';
+
+    let linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+}
+
+function handleFile(file) {
+    if (file.type === 'application/json' || true) { // Ignore le type de fichier
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                let contents = e.target.result;
+                pointsStrategie = JSON.parse(contents);
+                numeroPointStrategie = pointsStrategie.length ? pointsStrategie[pointsStrategie.length - 1].numero + 1 : 1;
+                redraw(); // Force le redessinage pour afficher les points importés
+            } catch (error) {
+                console.error("Erreur lors du parsing du fichier JSON : ", error);
+                alert("Le fichier choisi ne contient pas de JSON valide.");
+            }
+        };
+        reader.readAsText(file.file);
+    } else {
+        console.log("Tentative de lecture du fichier comme JSON indépendamment du type.");
+    }
 }
