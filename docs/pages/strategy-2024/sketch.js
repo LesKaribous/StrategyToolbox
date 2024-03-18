@@ -6,6 +6,10 @@ let cb_POI;
 let afficherPOI = true;
 let cb_DeleteOption;
 let deleteOption = false;
+let etatRobot = 'arrêté'; // Peut être 'lecture', 'pause', ou 'arrêté'
+let positionRobot = 0; // Indice du point de stratégie actuel
+let vitesseRobot = 1; // Vitesse de déplacement entre les points (modifiable par un curseur)
+
 
 // Points
 let echelleX, echelleY; // Facteurs d'échelle pour les axes X et Y
@@ -56,6 +60,7 @@ function draw() {
     drawPOI();
     drawPath(pointsStrategie);
     drawList(pointsStrategie);
+    drawRobot();
 }
 
 function setupUI() {
@@ -85,6 +90,44 @@ function setupUI() {
 
     let inputImport = createFileInput(handleFile);
     inputImport.parent('ui-container');
+
+    let btnLecture = createButton('Lecture');
+    btnLecture.mousePressed(() => etatRobot = 'lecture');
+    btnLecture.parent('ui-container');
+
+    let btnPause = createButton('Pause');
+    btnPause.mousePressed(() => etatRobot = 'pause');
+    btnPause.parent('ui-container');
+
+    let btnStop = createButton('Stop');
+    btnStop.mousePressed(() => {
+        etatRobot = 'arrêté';
+        positionRobot = 0; // Réinitialiser la position du robot
+    });
+    btnStop.parent('ui-container');
+
+    let curseurVitesse = createSlider(0, 100, 50); // Min, Max, Valeur par défaut
+    curseurVitesse.input(() => vitesseRobot = curseurVitesse.value() / 100);
+    curseurVitesse.parent('ui-container');
+}
+
+function drawRobot(){
+    if (etatRobot === 'lecture' || etatRobot === 'pause') {
+        if (pointsStrategie.length > 0) {
+            let pointActuel = pointsStrategie[positionRobot];
+            let canvasX = pointActuel.y * echelleY;
+            let canvasY = (3000 - pointActuel.x) * echelleX;
+            fill('red');
+            ellipse(canvasX, canvasY, 40, 40); // Dessiner le robot
+
+            if (etatRobot === 'lecture') {
+                positionRobot += vitesseRobot;
+                if (positionRobot >= pointsStrategie.length) {
+                    positionRobot = 0; // Recommencer au début si on atteint la fin
+                }
+            }
+        }
+    }
 }
 
 function majDeleteOption() {
@@ -262,7 +305,7 @@ function mousePressed() {
 
         if (!pointTrouve && mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height) {
             // Si aucun point de stratégie n'est sélectionné, vérifiez l'aimantation ou créez un nouveau point
-            verifierAimantationEtCreerPoint(); // Une nouvelle fonction pour la logique d'aimantation et création de point
+            verifierAimantationEtCreerPoint();
         }
     }
 }
