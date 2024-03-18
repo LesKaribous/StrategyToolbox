@@ -1,5 +1,6 @@
 let terrainImage;
 let ajustement = 90; // Pourcentage de la taille originale.
+let rawPOIs = [];
 
 // GUI
 let cb_POI;
@@ -8,13 +9,7 @@ let afficherPOI = true;
 // Points
 let echelleX, echelleY; // Facteurs d'échelle pour les axes X et Y
 
-let pois = [
-    { x: 1500, y: 0, nom: "POI 1", couleur: "red" },
-    { x: 1500, y: 500, nom: "POI 2", couleur: "#00FF00" },
-    { x: 1500, y: 1000, nom: "POI 3", couleur: "rgb(0, 0, 255)" },
-    { x: 1500, y: 1500, nom: "POI 3", couleur: "rgb(0, 0, 255)" },
-    { x: 1500, y: 2000, nom: "POI 3", couleur: "rgb(0, 0, 255)" }
-  ];
+let pois = [];
   
 
   function calculerEchelle() {
@@ -26,6 +21,7 @@ let pois = [
 
 function preload() {
     terrainImage = loadImage('vinyle2024.png');
+    rawPOIs = loadStrings('https://raw.githubusercontent.com/LesKaribous/Twinsystem/2024/src/poi.h');
 }
 
 function setup() {
@@ -45,7 +41,7 @@ function setup() {
     let canvas = createCanvas(width, height);
     canvas.parent('p5-container');
     calculerEchelle();
-
+    extractPOIs(); // Extrait les points après le chargement du fichier
     setupUI();
 }
 
@@ -145,3 +141,16 @@ function drawList(points) {
     });
   }
   
+  function extractPOIs() {
+    const regex = /const Vec2 (\w+) = Vec2\((\d+),(\d+)\);/; // Regex pour matcher les points
+  
+    rawPOIs.forEach(line => {
+      const match = line.match(regex);
+      if (match) {
+        const name = match[1];
+        const x = parseInt(match[2], 10);
+        const y = parseInt(match[3], 10);
+        pois.push({ nom: name, x: x, y: y, couleur: "red" }); // Ajoute les points extraits avec une couleur fixe pour l'exemple
+      }
+    });
+  }
