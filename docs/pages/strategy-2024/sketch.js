@@ -92,8 +92,13 @@ function setupUI() {
     inputImport.parent('ui-container');
 
     let btnLecture = createButton('Lecture');
-    btnLecture.mousePressed(() => etatRobot = 'lecture');
     btnLecture.parent('ui-container');
+    btnLecture.mousePressed(() => {
+        if (etatRobot !== 'lecture') { // Si le robot n'est pas déjà en lecture, réinitialisez sa position
+            positionRobot = 0;
+        }
+        etatRobot = 'lecture';
+    });
 
     let btnPause = createButton('Pause');
     btnPause.mousePressed(() => etatRobot = 'pause');
@@ -111,24 +116,34 @@ function setupUI() {
     curseurVitesse.parent('ui-container');
 }
 
-function drawRobot(){
-    if (etatRobot === 'lecture' || etatRobot === 'pause') {
-        if (pointsStrategie.length > 0) {
-            let pointActuel = pointsStrategie[positionRobot];
-            let canvasX = pointActuel.y * echelleY;
-            let canvasY = (3000 - pointActuel.x) * echelleX;
-            fill('red');
-            ellipse(canvasX, canvasY, 40, 40); // Dessiner le robot
-
-            if (etatRobot === 'lecture') {
-                positionRobot += vitesseRobot;
-                if (positionRobot >= pointsStrategie.length) {
-                    positionRobot = 0; // Recommencer au début si on atteint la fin
-                }
+function drawRobot() {
+    if (pointsStrategie.length > 1 && (etatRobot === 'lecture' || etatRobot === 'pause')) {
+        let indexActuel = Math.floor(positionRobot);
+        let indexSuivant = indexActuel + 1 < pointsStrategie.length ? indexActuel + 1 : indexActuel;
+        let progression = positionRobot - indexActuel;
+        
+        let pointActuel = pointsStrategie[indexActuel];
+        let pointSuivant = pointsStrategie[indexSuivant];
+        
+        let canvasX = lerp(pointActuel.y * echelleY, pointSuivant.y * echelleY, progression);
+        let canvasY = lerp((3000 - pointActuel.x) * echelleX, (3000 - pointSuivant.x) * echelleX, progression);
+        
+        stroke(255); // Couleur du contour
+        strokeWeight(2); // Épaisseur du contour
+        fill('rgba(10, 10, 10, 0.5)');
+        ellipse(canvasX, canvasY, 50, 50);
+        
+        if (etatRobot === 'lecture') {
+            if (indexActuel < pointsStrategie.length - 1) { // Empêche l'incrémentation au-delà du dernier point
+                positionRobot += vitesseRobot * 0.01;
             }
         }
     }
 }
+
+
+
+
 
 function majDeleteOption() {
     deleteOption = cb_DeleteOption.checked();
@@ -404,7 +419,7 @@ function loadStrategie() {
 
 function exporterStrategie() {
     let dataStr = JSON.stringify(pointsStrategie, null, 2);
-    let dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    let dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
 
     let exportFileDefaultName = 'strategie.json';
 
@@ -417,7 +432,7 @@ function exporterStrategie() {
 function handleFile(file) {
     if (file.type === 'application/json' || true) { // Ignore le type de fichier
         let reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = function (e) {
             try {
                 let contents = e.target.result;
                 pointsStrategie = JSON.parse(contents);
