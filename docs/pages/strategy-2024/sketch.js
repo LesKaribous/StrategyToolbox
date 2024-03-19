@@ -68,7 +68,7 @@ function setupUI() {
     cb_POI.parent('ui-container');
     cb_POI.changed(majPOI);
 
-    cb_DeleteOption = createCheckbox("Delete Option", deleteOption);
+    cb_DeleteOption = createCheckbox("Delete Mode", deleteOption);
     cb_DeleteOption.parent('ui-container');
     cb_DeleteOption.changed(majDeleteOption);
 
@@ -76,22 +76,26 @@ function setupUI() {
     btnClear.parent('ui-container');
     btnClear.mousePressed(clearStrategie);
 
-    let btnSave = createButton("Sauvegarder Stratégie");
+    let btnSave = createButton("Quick save");
     btnSave.parent('ui-container');
     btnSave.mousePressed(saveStrategie);
 
-    let btnLoad = createButton("Charger Stratégie");
+    let btnLoad = createButton("Quick load");
     btnLoad.parent('ui-container');
     btnLoad.mousePressed(loadStrategie);
 
-    let btnExport = createButton('Exporter Stratégie');
+    let btnExport = createButton('Export JSON');
     btnExport.parent('ui-container');
     btnExport.mousePressed(exporterStrategie);
+
+    let btnExportCPP = createButton('Export CPP');
+    btnExportCPP.parent('ui-container');
+    btnExportCPP.mousePressed(exporterCPP);
 
     let inputImport = createFileInput(handleFile);
     inputImport.parent('ui-container');
 
-    let btnLecture = createButton('Lecture');
+    let btnLecture = createButton('Play');
     btnLecture.parent('ui-container');
     btnLecture.mousePressed(() => {
         if (etatRobot !== 'lecture') { // Si le robot n'est pas déjà en lecture, réinitialisez sa position
@@ -447,4 +451,36 @@ function handleFile(file) {
     } else {
         console.log("Tentative de lecture du fichier comme JSON indépendamment du type.");
     }
+}
+
+function exporterCPP() {
+    let contenuCPP = "void match(){\n";
+    pointsStrategie.forEach((point) => {
+        // Vérifier si le point correspond à un POI
+        let correspondancePOI = pois.find(poi => poi.x === point.x && poi.y === point.y);
+        if (correspondancePOI) {
+            // Utiliser le nom du POI s'il y a correspondance
+            contenuCPP += `    motion.go(POI::${correspondancePOI.nom}); // Numero ${point.numero}\n`;
+        } else {
+            // Sinon, utiliser les coordonnées x et y
+            contenuCPP += `    motion.go(${point.x},${point.y}); // Numero ${point.numero}\n`;
+        }
+    });
+    contenuCPP += "}\n";
+
+    download('strategy.cpp', contenuCPP);
+}
+
+
+function download(filename, text) {
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('download', filename);
+
+    element.style.display = 'none';
+    document.body.appendChild(element);
+
+    element.click();
+
+    document.body.removeChild(element);
 }
