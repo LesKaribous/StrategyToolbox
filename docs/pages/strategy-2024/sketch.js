@@ -10,7 +10,6 @@ let etatRobot = 'arrêté'; // Peut être 'lecture', 'pause', ou 'arrêté'
 let positionRobot = 0; // Indice du point de stratégie actuel
 let vitesseRobot = 1; // Vitesse de déplacement entre les points (modifiable par un curseur)
 
-
 // Points
 let echelleX, echelleY; // Facteurs d'échelle pour les axes X et Y
 let rawPOIs = [];
@@ -18,8 +17,6 @@ let pois = [];
 let pointsStrategie = [];
 let numeroPointStrategie = 1; // Commencez à numéroter à partir de 1
 let pointSelectionne = null;
-
-
 
 
 function calculerEchelle() {
@@ -125,18 +122,18 @@ function drawRobot() {
         let indexActuel = Math.floor(positionRobot);
         let indexSuivant = indexActuel + 1 < pointsStrategie.length ? indexActuel + 1 : indexActuel;
         let progression = positionRobot - indexActuel;
-        
+
         let pointActuel = pointsStrategie[indexActuel];
         let pointSuivant = pointsStrategie[indexSuivant];
-        
+
         let canvasX = lerp(pointActuel.y * echelleY, pointSuivant.y * echelleY, progression);
         let canvasY = lerp((3000 - pointActuel.x) * echelleX, (3000 - pointSuivant.x) * echelleX, progression);
-        
+
         stroke(255); // Couleur du contour
         strokeWeight(2); // Épaisseur du contour
         fill('rgba(10, 10, 10, 0.5)');
         ellipse(canvasX, canvasY, 50, 50);
-        
+
         if (etatRobot === 'lecture') {
             if (indexActuel < pointsStrategie.length - 1) { // Empêche l'incrémentation au-delà du dernier point
                 positionRobot += vitesseRobot * 0.01;

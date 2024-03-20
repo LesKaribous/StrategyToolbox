@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Generateur de stratégies - 2024
-nav_order: 3
+nav_order: 4
 ---
 
 # Générateur de stratégies - 2024
