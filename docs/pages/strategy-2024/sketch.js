@@ -61,39 +61,51 @@ function draw() {
 }
 
 function setupUI() {
+    // Initialisation des checkboxes avec style Bootstrap
     cb_POI = createCheckbox("POIs", afficherPOI);
-    cb_POI.parent('ui-container');
+    cb_POI.parent('checkboxContainer');
     cb_POI.changed(majPOI);
+    cb_POI.class('form-check-label');
 
     cb_DeleteOption = createCheckbox("Delete Mode", deleteOption);
-    cb_DeleteOption.parent('ui-container');
+    cb_DeleteOption.parent('checkboxContainer');
     cb_DeleteOption.changed(majDeleteOption);
+    cb_DeleteOption.class('form-check-label');
 
+    // Initialisation des boutons avec style Bootstrap
     let btnClear = createButton("Clear Stratégie");
-    btnClear.parent('ui-container');
+    btnClear.parent('buttonsContainer');
     btnClear.mousePressed(clearStrategie);
+    btnClear.class('btn btn-warning mr-2');
 
     let btnSave = createButton("Quick save");
-    btnSave.parent('ui-container');
+    btnSave.parent('buttonsContainer');
     btnSave.mousePressed(saveStrategie);
+    btnSave.class('btn btn-success mr-2');
 
     let btnLoad = createButton("Quick load");
-    btnLoad.parent('ui-container');
+    btnLoad.parent('buttonsContainer');
     btnLoad.mousePressed(loadStrategie);
+    btnLoad.class('btn btn-info mr-2');
 
     let btnExport = createButton('Export JSON');
-    btnExport.parent('ui-container');
+    btnExport.parent('buttonsContainer');
     btnExport.mousePressed(exporterStrategie);
+    btnExport.class('btn btn-primary mr-2');
 
     let btnExportCPP = createButton('Export CPP');
-    btnExportCPP.parent('ui-container');
+    btnExportCPP.parent('buttonsContainer');
     btnExportCPP.mousePressed(exporterCPP);
+    btnExportCPP.class('btn btn-secondary mr-2');
 
+    // Initialisation de l'input de fichier
     let inputImport = createFileInput(handleFile);
-    inputImport.parent('ui-container');
+    inputImport.parent('fileInputContainer');
 
+    // Contrôles de lecture
     let btnLecture = createButton('Play');
-    btnLecture.parent('ui-container');
+    btnLecture.parent('robotContainer');
+    btnLecture.class('btn btn-light mr-2');
     btnLecture.mousePressed(() => {
         if (etatRobot !== 'lecture') { // Si le robot n'est pas déjà en lecture, réinitialisez sa position
             positionRobot = 0;
@@ -102,20 +114,25 @@ function setupUI() {
     });
 
     let btnPause = createButton('Pause');
+    btnPause.parent('robotContainer');
+    btnPause.class('btn btn-light mr-2');
     btnPause.mousePressed(() => etatRobot = 'pause');
-    btnPause.parent('ui-container');
 
     let btnStop = createButton('Stop');
+    btnStop.parent('robotContainer');
+    btnStop.class('btn btn-light mr-2');
     btnStop.mousePressed(() => {
         etatRobot = 'arrêté';
         positionRobot = 0; // Réinitialiser la position du robot
     });
-    btnStop.parent('ui-container');
 
-    let curseurVitesse = createSlider(0, 100, 50); // Min, Max, Valeur par défaut
+    // Curseur de vitesse
+    let curseurVitesse = createSlider(0, 100, 50);
+    curseurVitesse.parent('robotContainer');
+    curseurVitesse.class('custom-range');
     curseurVitesse.input(() => vitesseRobot = curseurVitesse.value() / 100);
-    curseurVitesse.parent('ui-container');
 }
+
 
 function drawRobot() {
     if (pointsStrategie.length > 1 && (etatRobot === 'lecture' || etatRobot === 'pause')) {
