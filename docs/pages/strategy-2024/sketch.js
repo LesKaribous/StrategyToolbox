@@ -28,7 +28,7 @@ function calculerEchelle() {
 
 function preload() {
     terrainImage = loadImage('vinyle2024.png');
-    rawPOIs = loadStrings('https://raw.githubusercontent.com/LesKaribous/Twinsystem/2024/src/poi.h');
+    rawPOIs = loadStrings('https://raw.githubusercontent.com/LesKaribous/Twinsystem/main/src/poi.h');
 }
 
 function setup() {
