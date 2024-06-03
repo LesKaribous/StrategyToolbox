@@ -301,7 +301,7 @@ function drawPoint(point) {
         // Appliquer l'alignement et le décalage pour le nom et les coordonnées
         textAlign((mouseX < width / 2) ? LEFT : RIGHT, (mouseY < height / 2) ? BOTTOM : TOP);
         text(`${point.nom}`, canvasX + offsetX, canvasY + offsetY);
-        if (point.rotation !== null)
+        if (point.rotation !== null && point.rotation !== undefined)
             text(`(${point.x}, ${point.y}, ${point.rotation}°)`, canvasX + offsetX, canvasY + offsetY + 20);
         else
             text(`(${point.x}, ${point.y})`, canvasX + offsetX, canvasY + offsetY + 20);
@@ -414,7 +414,10 @@ function mouseDragged() {
             // Si le point n'est pas aimanté, mettez à jour selon la position de la souris et remettez en bleu
             pointSelectionne.x = Math.round((3000 - (mouseY / echelleY)));
             pointSelectionne.y = Math.round(mouseX / echelleX);
-            pointSelectionne.couleur = "blue"; // La couleur originale des points de stratégie
+            if (pointSelectionne.rotation !== null)
+                pointSelectionne.couleur = "magenta"; // La couleur de la rotation
+            else
+                pointSelectionne.couleur = "blue"; // La couleur originale des points de stratégie
 
             // Restrictions des bords du terrain
             if (pointSelectionne.x < 0)
