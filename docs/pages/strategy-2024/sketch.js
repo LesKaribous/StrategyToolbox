@@ -6,6 +6,8 @@ let cb_POI;
 let afficherPOI = true;
 let cb_DeleteOption;
 let deleteOption = false;
+let cb_Rotation;
+let rotationOption = false;
 let etatRobot = 'arrêté'; // Peut être 'lecture', 'pause', ou 'arrêté'
 let positionRobot = 0; // Indice du point de stratégie actuel
 let vitesseRobot = 1; // Vitesse de déplacement entre les points (modifiable par un curseur)
@@ -18,6 +20,14 @@ let pointsStrategie = [];
 let numeroPointStrategie = 1; // Commencez à numéroter à partir de 1
 let pointSelectionne = null;
 
+// Orientation
+let rotationActuelle = null;
+let rotationPointActuel = 0;
+let rotationSuivante = null;
+
+// On désactive le menu contextuel pour pouvoir éditer les rotation des points avec
+let noMenuArea = document.getElementById('p5-container');
+noMenuArea.addEventListener('contextmenu', event => event.preventDefault());
 
 function calculerEchelle() {
     // Le canvas vise à représenter une surface de 3m x 2m (3000mm x 2000mm)
@@ -32,7 +42,7 @@ function preload() {
 }
 
 function setup() {
-
+    angleMode(DEGREES); // Angle en degrés pour les rotations
     const container = select('#p5-container');
     let height = (windowHeight * ajustement) / 100;
     let width = (height * 2) / 3;
@@ -62,15 +72,20 @@ function draw() {
 
 function setupUI() {
     // Initialisation des checkboxes avec style Bootstrap
-    cb_POI = createCheckbox("POIs", afficherPOI);
+    cb_POI = createCheckbox(" POIs", afficherPOI);
     cb_POI.parent('checkboxContainer');
     cb_POI.changed(majPOI);
     cb_POI.class('form-check-label');
 
-    cb_DeleteOption = createCheckbox("Delete Mode", deleteOption);
+    cb_DeleteOption = createCheckbox(" Delete Mode", deleteOption);
     cb_DeleteOption.parent('checkboxContainer');
     cb_DeleteOption.changed(majDeleteOption);
     cb_DeleteOption.class('form-check-label');
+
+    cb_Rotation = createCheckbox(" Rotation", rotationOption);
+    cb_Rotation.parent('checkboxContainer');
+    cb_Rotation.changed(majRotationOption);
+    cb_Rotation.class('form-check-label');
 
     // Initialisation des boutons avec style Bootstrap
     let btnClear = createButton("Clear Stratégie");
@@ -124,6 +139,7 @@ function setupUI() {
     btnStop.mousePressed(() => {
         etatRobot = 'arrêté';
         positionRobot = 0; // Réinitialiser la position du robot
+        rotationActuelle = null; // Réinitialiser la rotation actuelle
     });
 
     // Curseur de vitesse
@@ -146,10 +162,16 @@ function drawRobot() {
         let canvasX = lerp(pointActuel.y * echelleY, pointSuivant.y * echelleY, progression);
         let canvasY = lerp((3000 - pointActuel.x) * echelleX, (3000 - pointSuivant.x) * echelleX, progression);
 
+        if (pointActuel.rotation !== null) {
+            rotationActuelle = pointActuel.rotation;
+        }
+        
         stroke(255); // Couleur du contour
         strokeWeight(2); // Épaisseur du contour
         fill('rgba(10, 10, 10, 0.5)');
         ellipse(canvasX, canvasY, 50, 50);
+
+        line(canvasX, canvasY, canvasX + 25 * cos(rotationActuelle), canvasY + 25 * sin(rotationActuelle));
 
         if (etatRobot === 'lecture') {
             if (indexActuel < pointsStrategie.length - 1) { // Empêche l'incrémentation au-delà du dernier point
@@ -169,6 +191,10 @@ function majDeleteOption() {
 
 function majPOI() {
     afficherPOI = cb_POI.checked();
+}
+
+function majRotationOption() {
+    rotationOption = cb_Rotation.checked();
 }
 
 function drawPOI() {
@@ -228,6 +254,16 @@ function drawPoint(point) {
     // Vérifier si la souris est proche du point pour décider si on affiche un contour
     let estProche = dist(mouseX, mouseY, canvasX, canvasY) < taillePoint / 2;
 
+    // Contour blanc même si la souris se trouve en dehors du canvas
+    if (pointSelectionne === point && 
+        (Math.round(3000 - (mouseY / echelleY)) > 3000 || 
+        Math.round(mouseX / echelleX) > 2000 || 
+        Math.round(3000 - (mouseY / echelleY)) < 0 || 
+        Math.round(mouseX / echelleX) < 0))
+    {
+        estProche = true;
+    }
+
     // Si la souris est proche, définir le contour en blanc
     if (estProche) {
         stroke(255); // Couleur du contour
@@ -265,7 +301,10 @@ function drawPoint(point) {
         // Appliquer l'alignement et le décalage pour le nom et les coordonnées
         textAlign((mouseX < width / 2) ? LEFT : RIGHT, (mouseY < height / 2) ? BOTTOM : TOP);
         text(`${point.nom}`, canvasX + offsetX, canvasY + offsetY);
-        text(`(${point.x}, ${point.y})`, canvasX + offsetX, canvasY + offsetY + 20);
+        if (point.rotation !== null)
+            text(`(${point.x}, ${point.y}, ${point.rotation}°)`, canvasX + offsetX, canvasY + offsetY + 20);
+        else
+            text(`(${point.x}, ${point.y})`, canvasX + offsetX, canvasY + offsetY + 20);
 
         // Réinitialisez le contour pour les autres éléments à dessiner après le texte
         noStroke();
@@ -309,42 +348,43 @@ function extractPOIs() {
         }
     });
 }
-function mousePressed() {
-    if (deleteOption && mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height) {
-        // Logique de suppression des points
-        for (let i = pointsStrategie.length - 1; i >= 0; i--) {
-            let point = pointsStrategie[i];
-            let canvasX = point.y * echelleY;
-            let canvasY = (3000 - point.x) * echelleX;
-            if (dist(mouseX, mouseY, canvasX, canvasY) < 15) {
-                // Supprime le point et met à jour les numéros des points suivants
-                pointsStrategie.splice(i, 1);
-                renumeroterPoints();
-                return; // Arrêtez la recherche dès qu'un point est trouvé et supprimé
-            }
-        }
-    } else {
-        let pointTrouve = false;
-        // Tentez d'abord de sélectionner un point de stratégie existant pour le déplacer
-        for (let point of pointsStrategie) {
-            let canvasX = point.y * echelleY;
-            let canvasY = (3000 - point.x) * echelleX;
-            if (dist(mouseX, mouseY, canvasX, canvasY) < 15) {
-                pointSelectionne = point;
-                pointTrouve = true;
-                break; // Un point est trouvé pour déplacement, arrêter la recherche
-            }
-        }
 
-        if (!pointTrouve && mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height) {
-            // Si aucun point de stratégie n'est sélectionné, vérifiez l'aimantation ou créez un nouveau point
-            verifierAimantationEtCreerPoint();
+function mousePressed() {
+    if (mouseButton === LEFT)
+    {
+        if (deleteOption && mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height) {
+            // Logique de suppression des points
+            for (let i = pointsStrategie.length - 1; i >= 0; i--) {
+                let point = pointsStrategie[i];
+                let canvasX = point.y * echelleY;
+                let canvasY = (3000 - point.x) * echelleX;
+                if (dist(mouseX, mouseY, canvasX, canvasY) < 15) {
+                    // Supprime le point et met à jour les numéros des points suivants
+                    pointsStrategie.splice(i, 1);
+                    renumeroterPoints();
+                    return; // Arrêtez la recherche dès qu'un point est trouvé et supprimé
+                }
+            }
+        } else {
+            let pointTrouve = false;
+            // Tentez d'abord de sélectionner un point de stratégie existant pour le déplacer
+            for (let point of pointsStrategie) {
+                let canvasX = point.y * echelleY;
+                let canvasY = (3000 - point.x) * echelleX;
+                if (dist(mouseX, mouseY, canvasX, canvasY) < 15) {
+                    pointSelectionne = point;
+                    pointTrouve = true;
+                    break; // Un point est trouvé pour déplacement, arrêter la recherche
+                }
+            }
+
+            if (!pointTrouve && mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height) {
+                // Si aucun point de stratégie n'est sélectionné, vérifiez l'aimantation ou créez un nouveau point
+                verifierAimantationEtCreerPoint();
+            }
         }
     }
 }
-
-
-
 
 
 function renumeroterPoints() {
@@ -375,6 +415,20 @@ function mouseDragged() {
             pointSelectionne.x = Math.round((3000 - (mouseY / echelleY)));
             pointSelectionne.y = Math.round(mouseX / echelleX);
             pointSelectionne.couleur = "blue"; // La couleur originale des points de stratégie
+
+            // Restrictions des bords du terrain
+            if (pointSelectionne.x < 0)
+                pointSelectionne.x = 0;
+
+            if (pointSelectionne.x > 3000)
+                pointSelectionne.x = 3000;
+
+            if (pointSelectionne.y < 0)
+                pointSelectionne.y = 0;
+
+            if (pointSelectionne.y > 2000)
+                pointSelectionne.y = 2000;
+                
         }
     }
 }
@@ -389,6 +443,7 @@ function verifierAimantationEtCreerPoint() {
             pointsStrategie.push({
                 x: poi.x,
                 y: poi.y,
+                rotation: null, // Aucune rotation par défaut
                 nom: `Stratégie ${numeroPointStrategie}`,
                 couleur: "green",
                 numero: numeroPointStrategie++
@@ -402,9 +457,11 @@ function verifierAimantationEtCreerPoint() {
         // Crée un nouveau point à l'emplacement de la souris si non aimanté
         let xTerrain = Math.round((3000 - (mouseY / echelleY)));
         let yTerrain = Math.round(mouseX / echelleX);
+
         pointsStrategie.push({
             x: xTerrain,
             y: yTerrain,
+            rotation: null, // Aucune rotation par défaut
             nom: `Stratégie ${numeroPointStrategie}`,
             couleur: "blue",
             numero: numeroPointStrategie++
@@ -414,6 +471,49 @@ function verifierAimantationEtCreerPoint() {
 
 
 function mouseReleased() {
+    if (rotationOption) // Verif si l'option de modif rotation activée
+    {
+        if (mouseButton === RIGHT && 
+            (mouseX / echelleX) > 0 && 
+            (mouseX / echelleX) < 2000 && 
+            (3000 - (mouseY / echelleY)) > 0 && 
+            (3000 - (mouseY / echelleY)) < 3000) // Verif si le clic droit est dans le terrain
+        {
+            let pointTrouve = false;
+            for (let point of pointsStrategie) {
+                let canvasX = point.y * echelleY;
+                let canvasY = (3000 - point.x) * echelleX;
+                if (dist(mouseX, mouseY, canvasX, canvasY) < 15) {
+                    pointSelectionne = point;
+                    pointTrouve = true;
+                    break; // Un point est trouvé pour déplacement, arrêter la recherche
+                }
+            }
+
+            if (pointTrouve)
+            {
+                inputRotation = prompt(`Entrer la rotation que va effectuer le robot au point (${pointSelectionne.x}, ${pointSelectionne.y})`);
+
+                if (inputRotation === "null" || inputRotation === "" || inputRotation === null)
+                {
+                    inputRotation = null;
+                    pointSelectionne.rotation = inputRotation;
+                    pointSelectionne.couleur = "blue";
+                }
+                else if ((inputRotation / 360) < -1 || (inputRotation % 360) > 1)
+                {
+                    inputRotation = abs(inputRotation - 360 * parseInt(inputRotation / 360));
+                    pointSelectionne.rotation = inputRotation;
+                    pointSelectionne.couleur = "magenta";
+                }
+                else
+                {
+                    pointSelectionne.rotation = inputRotation;
+                    pointSelectionne.couleur = "magenta";
+                }
+            }
+        }
+    }
     pointSelectionne = null; // Réinitialiser le point sélectionné après le glissement
 }
 
