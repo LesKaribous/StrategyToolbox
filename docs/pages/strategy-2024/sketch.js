@@ -171,7 +171,7 @@ function drawRobot() {
         fill('rgba(10, 10, 10, 0.5)');
         ellipse(canvasX, canvasY, 50, 50);
 
-        line(canvasX, canvasY, canvasX + 25 * cos(rotationActuelle), canvasY + 25 * sin(rotationActuelle));
+        line(canvasX, canvasY, canvasX + 25 * cos(rotationActuelle-90), canvasY + 25 * sin(rotationActuelle-90));
 
         if (etatRobot === 'lecture') {
             if (indexActuel < pointsStrategie.length - 1) { // Empêche l'incrémentation au-delà du dernier point
