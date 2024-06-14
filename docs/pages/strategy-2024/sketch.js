@@ -299,8 +299,9 @@ function drawPoint(point) {
         // Appliquer l'alignement et le décalage pour le nom et les coordonnées
         textAlign((mouseX < width / 2) ? LEFT : RIGHT, (mouseY < height / 2) ? BOTTOM : TOP);
         text(`${point.nom}`, canvasX + offsetX, canvasY + offsetY);
+
         if (point.rotation !== null && point.rotation !== undefined)
-            text(`(${point.x}, ${point.y}, ${point.rotation}°)`, canvasX + offsetX, canvasY + offsetY + 20);
+            text(`(${point.x}, ${point.y}, ${point.rotation.toFixed(2)}°)`, canvasX + offsetX, canvasY + offsetY + 20);
         else
             text(`(${point.x}, ${point.y})`, canvasX + offsetX, canvasY + offsetY + 20);
 
@@ -493,7 +494,14 @@ function mouseReleased() {
 
             if (pointTrouve)
             {
-                inputRotation = prompt(`Entrer la rotation que va effectuer le robot au point (${pointSelectionne.x}, ${pointSelectionne.y})`);
+                var inputRotation = "thisisnotanumber";
+
+                while (inputRotation != "" && inputRotation != null && inputRotation != "null" && isNaN(inputRotation))
+                {
+                    inputRotation = prompt(`Entrer la rotation que va effectuer le robot au point (${pointSelectionne.x}, ${pointSelectionne.y})`);
+                    if (inputRotation.includes(","))
+                        inputRotation = inputRotation.replace(",", ".");
+                }
 
                 if (inputRotation === "null" || inputRotation === "" || inputRotation === null)
                 {
