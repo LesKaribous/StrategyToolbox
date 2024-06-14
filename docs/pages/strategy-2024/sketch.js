@@ -8,6 +8,8 @@ let cb_DeleteOption;
 let deleteOption = false;
 let cb_Rotation;
 let rotationOption = false;
+let cb_Alert;
+let alertOption = false;
 let etatRobot = 'arrêté'; // Peut être 'lecture', 'pause', ou 'arrêté'
 let positionRobot = 0; // Indice du point de stratégie actuel
 let vitesseRobot = 1; // Vitesse de déplacement entre les points (modifiable par un curseur)
@@ -87,6 +89,11 @@ function setupUI() {
     cb_Rotation.changed(majRotationOption);
     cb_Rotation.class('form-check-label');
 
+    cb_Alert = createCheckbox(" Alerte collision mur", alertOption);
+    cb_Alert.parent('checkboxContainer');
+    cb_Alert.changed(majAlertOption);
+    cb_Alert.class('form-check-label');    
+
     // Initialisation des boutons avec style Bootstrap
     let btnClear = createButton("Clear Stratégie");
     btnClear.parent('buttonsContainer');
@@ -162,7 +169,7 @@ function drawRobot() {
         let canvasX = lerp(pointActuel.y * echelleY, pointSuivant.y * echelleY, progression);
         let canvasY = lerp((3000 - pointActuel.x) * echelleX, (3000 - pointSuivant.x) * echelleX, progression);
 
-        let robotSize = height * (1/15); // Taille dynamique selon la taille du plateau
+        let robotSize = 130 * (height/2000); // Taille dynamique selon la taille du plateau
 
         if (pointActuel.rotation !== null) {
             rotationActuelle = pointActuel.rotation;
@@ -193,6 +200,10 @@ function majPOI() {
 
 function majRotationOption() {
     rotationOption = cb_Rotation.checked();
+}
+
+function majAlertOption() {
+    alertOption = cb_Alert.checked();
 }
 
 function drawPOI() {
@@ -442,10 +453,16 @@ function mouseDragged() {
 
 function verifierAimantationEtCreerPoint() {
     let aimante = false;
+    let robotSize = 130*2 * (height/2000); // Taille dynamique selon la taille du plateau
     for (let poi of pois) {
         let canvasX = poi.y * echelleY;
         let canvasY = (3000 - poi.x) * echelleX;
+
         if (dist(mouseX, mouseY, canvasX, canvasY) < 15) {
+
+            if (alertOption && (poi.x - robotSize < 0 || poi.x + robotSize > 3000 || poi.y - robotSize < 0 || poi.y + robotSize > 2000))
+                alert("Le point proche du bord du terrain, le robot risque une collision avec le mur");
+
             pointsStrategie.push({
                 x: poi.x,
                 y: poi.y,
@@ -463,6 +480,9 @@ function verifierAimantationEtCreerPoint() {
         // Crée un nouveau point à l'emplacement de la souris si non aimanté
         let xTerrain = Math.round((3000 - (mouseY / echelleY)));
         let yTerrain = Math.round(mouseX / echelleX);
+
+        if (alertOption && (xTerrain - robotSize < 0 || xTerrain + robotSize > 3000 || yTerrain - robotSize < 0 || yTerrain + robotSize > 2000))
+            alert("Le point proche du bord du terrain, le robot risque une collision avec le mur");
 
         pointsStrategie.push({
             x: xTerrain,
