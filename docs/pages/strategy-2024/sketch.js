@@ -162,6 +162,8 @@ function drawRobot() {
         let canvasX = lerp(pointActuel.y * echelleY, pointSuivant.y * echelleY, progression);
         let canvasY = lerp((3000 - pointActuel.x) * echelleX, (3000 - pointSuivant.x) * echelleX, progression);
 
+        let robotSize = height * (1/15); // Taille dynamique selon la taille du plateau
+
         if (pointActuel.rotation !== null) {
             rotationActuelle = pointActuel.rotation;
         }
@@ -169,9 +171,9 @@ function drawRobot() {
         stroke(255); // Couleur du contour
         strokeWeight(2); // Épaisseur du contour
         fill('rgba(10, 10, 10, 0.5)');
-        ellipse(canvasX, canvasY, 50, 50);
+        ellipse(canvasX, canvasY, robotSize);
 
-        line(canvasX, canvasY, canvasX + 25 * cos(rotationActuelle-90), canvasY + 25 * sin(rotationActuelle-90));
+        line(canvasX, canvasY, canvasX + robotSize/2 * cos(rotationActuelle-90), canvasY + robotSize/2 * sin(rotationActuelle-90));
 
         if (etatRobot === 'lecture') {
             if (indexActuel < pointsStrategie.length - 1) { // Empêche l'incrémentation au-delà du dernier point
@@ -180,10 +182,6 @@ function drawRobot() {
         }
     }
 }
-
-
-
-
 
 function majDeleteOption() {
     deleteOption = cb_DeleteOption.checked();
