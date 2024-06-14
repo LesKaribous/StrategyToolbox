@@ -284,6 +284,8 @@ function drawPoint(point) {
     }
 
     if (estProche) {
+        let isPOI = pois.find(poi => poi.x === point.x && poi.y === point.y);
+        let isUserPoint = pointsStrategie.find(userPoint => userPoint.x === point.x && userPoint.y === point.y);
         textSize(20);
         fill(0); // Couleur du texte
         stroke(255); // Contour du texte pour améliorer la lisibilité
@@ -298,7 +300,14 @@ function drawPoint(point) {
 
         // Appliquer l'alignement et le décalage pour le nom et les coordonnées
         textAlign((mouseX < width / 2) ? LEFT : RIGHT, (mouseY < height / 2) ? BOTTOM : TOP);
-        text(`${point.nom}`, canvasX + offsetX, canvasY + offsetY);
+        if (
+            (point.numero !== undefined && isPOI !== undefined && isUserPoint !== undefined) ||
+            (point.numero !== undefined && isPOI === undefined && isUserPoint !== undefined) ||
+            (point.numero === undefined && isPOI !== undefined && isUserPoint === undefined)
+        )
+        {
+            text(`${point.nom}`, canvasX + offsetX, canvasY + offsetY);
+        }
 
         if (point.rotation !== null && point.rotation !== undefined)
             text(`(${point.x}, ${point.y}, ${point.rotation.toFixed(2)}°)`, canvasX + offsetX, canvasY + offsetY + 20);
