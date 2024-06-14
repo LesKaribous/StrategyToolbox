@@ -307,12 +307,11 @@ function drawPoint(point) {
         )
         {
             text(`${point.nom}`, canvasX + offsetX, canvasY + offsetY);
+            if (point.rotation !== null && point.rotation !== undefined)
+                text(`(${point.x}, ${point.y}, ${point.rotation.toFixed(2)}°)`, canvasX + offsetX, canvasY + offsetY + 20);
+            else
+                text(`(${point.x}, ${point.y})`, canvasX + offsetX, canvasY + offsetY + 20);
         }
-
-        if (point.rotation !== null && point.rotation !== undefined)
-            text(`(${point.x}, ${point.y}, ${point.rotation.toFixed(2)}°)`, canvasX + offsetX, canvasY + offsetY + 20);
-        else
-            text(`(${point.x}, ${point.y})`, canvasX + offsetX, canvasY + offsetY + 20);
 
         // Réinitialisez le contour pour les autres éléments à dessiner après le texte
         noStroke();
