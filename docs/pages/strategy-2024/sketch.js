@@ -300,11 +300,7 @@ function drawPoint(point) {
 
         // Appliquer l'alignement et le décalage pour le nom et les coordonnées
         textAlign((mouseX < width / 2) ? LEFT : RIGHT, (mouseY < height / 2) ? BOTTOM : TOP);
-        if (
-            (point.numero !== undefined && isPOI !== undefined && isUserPoint !== undefined) ||
-            (point.numero !== undefined && isPOI === undefined && isUserPoint !== undefined) ||
-            (point.numero === undefined && isPOI !== undefined && isUserPoint === undefined)
-        )
+        if ((point.numero !== undefined && isPOI !== undefined && isUserPoint !== undefined) || (point.numero !== undefined && isPOI === undefined && isUserPoint !== undefined) || (point.numero === undefined && isPOI !== undefined && isUserPoint === undefined))
         {
             text(`${point.nom}`, canvasX + offsetX, canvasY + offsetY);
             if (point.rotation !== null && point.rotation !== undefined)
